@@ -1,4 +1,4 @@
-/* radare - MIT - Copyright 2016 - pancake@nowsecure.com */
+/* radare - LGPL - Copyright 2016 - pancake@nowsecure.com */
 
 #include <r_userconf.h>
 #include <r_io.h>
@@ -145,7 +145,7 @@ static int __close(RIODesc *fd) {
 RIOPlugin r_io_plugin_dcow = {
 	.name = "dcow",
 	.desc = "dirty cow baked IO for r2 dcow://[path]",
-	.license = "MIT",
+	.license = "LGPL",
 	.open = __open,
 	.close = __close,
 	.read = __read,

@@ -8,6 +8,22 @@ messing up the Copy-On-Write cache.
 
 This plugin works on all linux kernels from 2007 (>= 2.6.22) til 2016.
 
+Details
+-------
+
+For more details about this exploit checkout [https://dirtycow.ninja](https://dirtycow.ninja)
+
+Author
+------
+
+Written by Sergi Alvarez <pancake@nowsecure.com> at NowSecure
+
+
+License
+-------
+
+This plugin and the cowpy tool are distributed under the terms of the LGPL
+
 
 Usage
 -----

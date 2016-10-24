@@ -1,4 +1,4 @@
-/* cowpy - MIT Copyright 2016 - pancake@nowsecure.com */
+/* cowpy - LGPL Copyright 2016 - pancake@nowsecure.com */
 /*                                                    */
 /* cp-like tool exploiting the dirtycow vulnerability */
 
