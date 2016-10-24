@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
 	fstat (d, &st);
 
 	if (st.st_size < size) {
-		printf ("Warning: Destionation file is too small. :(\n");
+		printf ("Warning: Destination file is too small. :(\n");
 		printf ("Warning: Data will be truncated\n");
 	}	
 	char *buf = malloc (size);
