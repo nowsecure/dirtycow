@@ -22,7 +22,7 @@ Written by Sergi Alvarez <pancake@nowsecure.com> at NowSecure
 License
 -------
 
-This plugin and the cowpy tool are distributed under the terms of the LGPL
+This plugin and the cowpy tool are distributed under the terms of the LGPL, Copyright NowSecure 2016.
 
 
 Usage
