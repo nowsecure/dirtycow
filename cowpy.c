@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
 		printf ("Warning: Destination file is too small. :(\n");
 		printf ("Warning: Data will be truncated\n");
 	}	
-	char *buf = malloc (size);
+	unsigned char *buf = malloc (size);
 	read (f, buf, size);
 	close (f);
 	const int bs = 1024;

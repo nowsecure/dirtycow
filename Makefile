@@ -1,7 +1,7 @@
 IOCOW=io_dirtycow
 
 all:
-	$(CC) -fPIC -o $(IOCOW).so $(IOCOW).c $(shell pkg-config --cflags --libs r_util r_io)
+	$(CC) -shared -fPIC -o $(IOCOW).so $(IOCOW).c $(shell pkg-config --cflags --libs r_util r_io)
 	$(CC) -pie -o cowpy cowpy.c
 
 android and:
