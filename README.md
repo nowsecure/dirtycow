@@ -25,6 +25,20 @@ License
 This plugin and the cowpy tool are distributed under the terms of the LGPL, Copyright NowSecure 2016.
 
 
+Installation
+------------
+
+The easiest way to install this r2 plugin is by using r2pm like this:
+
+	$ r2pm -i dirtycow
+
+The repository contains also a program named `cowpy` that will copy
+the contents of one file into another one. Bear in mind that dirtycow
+can't resize files, so you will not be able to write more bytes than
+the ones in the destination file and your contents should be self
+contained and properly terminated by an exit 0 if it's a script.
+
+
 Usage
 -----
 

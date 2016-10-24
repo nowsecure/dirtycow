@@ -99,11 +99,10 @@ static int __read(RIO *io, RIODesc *fd, ut8 *buf, int len) {
 	if (f == -1) {
 		return -1;
 	}
-	lseek (f, io->off, SEEK_SET);
-
-	len = read(f, buf, len);
+	(void)lseek (f, io->off, SEEK_SET);
+	len = read (f, buf, len);
 	io->off = off;
-	close(f);
+	close (f);
 	return len;
 }
 
