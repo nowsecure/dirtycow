@@ -9,6 +9,17 @@ static int LOOPS = 10000;
 
 RIOPlugin r_io_plugin_dcow;
 
+#define PERM_READ 4
+#define PERM_WRITE 2
+#define PERM_EXEC 1
+
+typedef struct {
+	char *name;
+	ut64 from;
+	ut64 to;
+	int perm;
+} RIOSelfSection;
+
 typedef struct r_io_mmo_t {
 	char *filename;
 	int mode;
@@ -20,6 +31,75 @@ typedef struct r_io_mmo_t {
 	RIO * io_backref;
 	bool force_ptrace;
 } RIOdcowFileObj;
+
+static RIOSelfSection self_sections[1024];
+static int self_sections_count = 0;
+
+static int update_self_regions(RIO *io, int pid) {
+	self_sections_count = 0;
+	char *pos_c;
+	int i, l, perm;
+	char path[1024], line[1024];
+	char region[100], region2[100], perms[5];
+	snprintf (path, sizeof (path) - 1, "/proc/%d/maps", pid);
+	FILE *fd = fopen (path, "r");
+	if (!fd)
+		return false;
+
+	while (!feof (fd)) {
+		line[0]='\0';
+		fgets (line, sizeof (line)-1, fd);
+		if (line[0] == '\0') {
+			break;
+		}
+		path[0]='\0';
+		sscanf (line, "%s %s %*s %*s %*s %[^\n]", region+2, perms, path);
+		memcpy (region, "0x", 2);
+		pos_c = strchr (region + 2, '-');
+		if (pos_c) {
+			*pos_c++ = 0;
+			memcpy (region2, "0x", 2);
+			l = strlen (pos_c);
+			memcpy (region2 + 2, pos_c, l);
+			region2[2 + l] = 0;
+		} else {
+			region2[0] = 0;
+		}
+		perm = 0;
+		for (i = 0; i < 4 && perms[i]; i++) {
+			switch (perms[i]) {
+			case 'r': perm |= R_IO_READ; break;
+			case 'w': perm |= R_IO_WRITE; break;
+			case 'x': perm |= R_IO_EXEC; break;
+			}
+		}
+		self_sections[self_sections_count].from = r_num_get (NULL, region);
+		self_sections[self_sections_count].to = r_num_get (NULL, region2);
+		self_sections[self_sections_count].name = strdup (path);
+		self_sections[self_sections_count].perm = perm;
+		self_sections_count++;
+		r_num_get (NULL, region2);
+	}
+	fclose (fd);
+
+	return true;
+}
+
+static int self_in_section(RIO *io, ut64 addr, int *left, int *perm) {
+	int i;
+	for (i = 0; i < self_sections_count; i++) {
+		if (addr >= self_sections[i].from && addr < self_sections[i].to) {
+			if (left) {
+				*left = self_sections[i].to - addr;
+			}
+			if (perm) {
+				*perm = self_sections[i].perm;
+			}
+			return true;
+		}
+	}
+	return false;
+}
 
 static ut64 r_io_dcow_seek(RIO *io, RIOdcowFileObj *mmo, ut64 offset, int whence) {
 	switch (whence) {
@@ -50,7 +130,7 @@ RIOdcowFileObj *r_io_dcow_create_new_file(RIO  *io, const char *filename, int mo
 	if (!mmo) {
 		return NULL;
 	}
-	mmo->filename = strdup (filename);
+	mmo->filename = filename? strdup (filename): NULL;
 	mmo->fd = r_num_rand (0xFFFF); // XXX: Use r_io_fd api
 	mmo->mode = mode;
 	mmo->flags = flags;
@@ -59,20 +139,25 @@ RIOdcowFileObj *r_io_dcow_create_new_file(RIO  *io, const char *filename, int mo
 }
 
 static int r_io_dcow_check (const char *filename) {
-	return (filename && !strncmp (filename, "dcow://", 7) && *(filename + 7));
+	return (filename && !strncmp (filename, "dcow://", 7));
 }
 
 static RIODesc *r_io_dcow_open(RIO *io, const char *file, int flags, int mode) {
 	const char* name = !strncmp (file, "dcow://", 7) ? file + 7 : file;
-	int f = open(name, O_RDONLY);
-	if (f == -1) {
-		return NULL;
+	if (name) {
+		int f = open (name, O_RDONLY);
+		if (f == -1) {
+			return NULL;
+		}
+		close(f);
+	} else {
+		name = NULL;
 	}
-	close(f);
 	RIOdcowFileObj *mmo;
 	if (!(mmo = r_io_dcow_create_new_file (io, name, mode, flags))) {
 		return NULL;
 	}
+	(void)update_self_regions (io, getpid ());
 	return r_io_desc_new (&r_io_plugin_dcow, mmo->fd,
 		mmo->filename, flags, mode, mmo);
 }
@@ -92,17 +177,28 @@ static int __read(RIO *io, RIODesc *fd, ut8 *buf, int len) {
 	if (!fd || !fd->data || !buf) {
 		return -1;
 	}
-
 	ut64 off = io->off;
 	RIOdcowFileObj *mmo = fd->data;
-	int f = open(mmo->filename, O_RDONLY);
-	if (f == -1) {
-		return -1;
+	if (mmo->filename) {
+		int f = open (mmo->filename, O_RDONLY);
+		if (f == -1) {
+			return -1;
+		}
+		(void)lseek (f, io->off, SEEK_SET);
+		len = read (f, buf, len);
+		io->off = off;
+		close (f);
+	} else {
+		int left, perm;
+		if (self_in_section (io, io->off, &left, &perm)) {
+			if (perm & R_IO_READ) {
+				int newlen = R_MIN (len, left);
+				ut8 *ptr = (ut8*)(size_t)io->off;
+				memcpy (buf, ptr, newlen);
+				return newlen;
+			}
+		}
 	}
-	(void)lseek (f, io->off, SEEK_SET);
-	len = read (f, buf, len);
-	io->off = off;
-	close (f);
 	return len;
 }
 
@@ -114,17 +210,16 @@ static int __write(RIO *io, RIODesc *fd, const ut8 *buf, int len) {
 	int i;
 	const int bs = 1024; // use pagesize here
 	const char *file = mmo->filename;
-	if (mmo->force_ptrace || !strcmp (file, "ptrace")) {
+	if (mmo->force_ptrace) {
 		file = NULL;
 	}
-
-	for (i = 0; i<len; i+= bs) {
+	for (i = 0; i < len; i+= bs) {
 		int pc = i * 100 / len;
-		eprintf ("\rDirtycowing %d%% ", pc);
+		eprintf ("\rDirtyCowing %d%% ", pc);
 		dirtycow (file, io->off + i,
 			buf + i, R_MIN (len - i, bs));
 	}
-	eprintf ("\rDirtycowing 100%%\n");
+	eprintf ("\rDirtyCowing 100%%\n");
 	return len;
 }
 
