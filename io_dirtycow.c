@@ -114,7 +114,7 @@ static int __write(RIO *io, RIODesc *fd, const ut8 *buf, int len) {
 	int i;
 	const int bs = 1024; // use pagesize here
 	const char *file = mmo->filename;
-	if (mmo->force_ptrace || !strcmp (file, "self")) {
+	if (mmo->force_ptrace || !strcmp (file, "ptrace")) {
 		file = NULL;
 	}
 
