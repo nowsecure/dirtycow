@@ -113,11 +113,15 @@ static int __write(RIO *io, RIODesc *fd, const ut8 *buf, int len) {
 	RIOdcowFileObj *mmo = fd->data;
 	int i;
 	const int bs = 1024; // use pagesize here
+	const char *file = mmo->filename;
+	if (!strcmp (file, "self")) {
+		file = NULL;
+	}
 
 	for (i = 0; i<len; i+= bs) {
 		int pc = i * 100 / len;
 		eprintf ("\rDirtycowing %d%% ", pc);
-		dirtycow (mmo->filename, io->off + i,
+		dirtycow (file, io->off + i,
 			buf + i, R_MIN (len - i, bs));
 	}
 	eprintf ("\rDirtycowing 100%%\n");
