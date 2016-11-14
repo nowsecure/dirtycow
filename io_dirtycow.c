@@ -4,6 +4,7 @@
 #include <r_io.h>
 #include <r_lib.h>
 
+static int LOOPS = 10000;
 #include "exploit.c"
 
 RIOPlugin r_io_plugin_dcow;
@@ -152,12 +153,15 @@ static int __system(RIO *io, RIODesc *fd, const char *command) {
 	RIOdcowFileObj *mmo = fd->data;
 	if (!strcmp (command, "?")) {
 		eprintf ("Dirtycow IO commands:\n");
+		eprintf ("=!loop 10000\n");
 		eprintf ("=!ptrace\n");
 		eprintf ("=!mmap\n");
 	} else if (!strcmp (command, "ptrace")) {
 		mmo->force_ptrace = true;
 	} else if (!strcmp (command, "mmap")) {
 		mmo->force_ptrace = false;
+	} else if (!strncmp (command, "loop ", 5)) {
+		LOOPS = atoi (command + 5);
 	}
 }
 
