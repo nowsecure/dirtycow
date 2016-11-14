@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <linux/sched.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/wait.h>
@@ -18,9 +20,9 @@ static int debuggee(void *arg_) {
 		err(1, "prctl(PR_SET_PDEATHSIG)");
 #endif
 
-	if (ptrace (PTRACE_TRACEME, 0, NULL, NULL) == -1)
+	if (ptrace (PTRACE_TRACEME, 0, NULL, NULL) == -1) {
 		err(1, "ptrace(PTRACE_TRACEME)");
-
+	}
 	kill (getpid (), SIGSTOP);
 
 	return 0;
@@ -76,15 +78,20 @@ static void *ptraceThread(void *arg_) {
 
 	arg = (struct dcow_user_t *)arg_;
 
+	if (fork ()) {
+		return ret;
+	}
+
 	flags = CLONE_VM | CLONE_PTRACE;
 	pid = clone (debuggee, child_stack + sizeof (child_stack) - 8, flags, arg);
 	if (pid == -1) {
-		warn("clone");
+		warn ("clone");
 		return NULL;
 	}
 
 	if (waitpid (pid, &status, __WALL) == -1) {
-		warn("waitpid");
+		warn ("waitpid");
+		exit (0);
 		return NULL;
 	}
 
@@ -92,12 +99,13 @@ static void *ptraceThread(void *arg_) {
 		ptrace_memcpy (pid, arg->addr, arg->buf, arg->len);
 	}
 	if (ptrace (PTRACE_CONT, pid, NULL, NULL) == -1) {
-		warn("ptrace(PTRACE_CONT)");
+		warn ("ptrace(PTRACE_CONT)");
 	}
 
 	if (waitpid (pid, NULL, __WALL) == -1) {
-		warn("waitpid");
+		warn ("waitpid");
 	}
 
+	exit (0);
 	return ret;
 }

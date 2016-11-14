@@ -144,12 +144,12 @@ static int r_io_dcow_check (const char *filename) {
 
 static RIODesc *r_io_dcow_open(RIO *io, const char *file, int flags, int mode) {
 	const char* name = !strncmp (file, "dcow://", 7) ? file + 7 : file;
-	if (name) {
+	if (name && *name) {
 		int f = open (name, O_RDONLY);
 		if (f == -1) {
 			return NULL;
 		}
-		close(f);
+		close (f);
 	} else {
 		name = NULL;
 	}
@@ -159,7 +159,7 @@ static RIODesc *r_io_dcow_open(RIO *io, const char *file, int flags, int mode) {
 	}
 	(void)update_self_regions (io, getpid ());
 	return r_io_desc_new (&r_io_plugin_dcow, mmo->fd,
-		mmo->filename, flags, mode, mmo);
+		mmo->filename? mmo->filename: "(self)", flags, mode, mmo);
 }
 
 static bool __plugin_open(RIO *io, const char *file, bool many) {

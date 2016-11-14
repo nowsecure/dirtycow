@@ -2,6 +2,7 @@
 /*                                                    */
 /* cp-like tool exploiting the dirtycow vulnerability */
 
+static int LOOPS = 10000;
 #include "exploit.c"
 
 #define R_MIN(x,y) (((x)>(y))?(y):(x))
