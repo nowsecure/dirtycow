@@ -2,7 +2,7 @@ IOCOW=io_dirtycow
 
 TARGET_OS=$(shell uname -o 2> /dev/null || uname)
 
-ifeq ($(TARGET_OS),Linux)
+ifeq ($(TARGET_OS),GNU/Linux)
 LDFLAGS+=-lpthread
 endif
 
