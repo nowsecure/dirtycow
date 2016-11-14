@@ -3,6 +3,7 @@
 #include <r_userconf.h>
 #include <r_io.h>
 #include <r_lib.h>
+#include <stdbool.h>
 
 static int LOOPS = 10000;
 #include "exploit.c"
@@ -248,15 +249,27 @@ static int __system(RIO *io, RIODesc *fd, const char *command) {
 	RIOdcowFileObj *mmo = fd->data;
 	if (!strcmp (command, "?")) {
 		eprintf ("Dirtycow IO commands:\n");
-		eprintf ("=!loop 10000\n");
-		eprintf ("=!ptrace\n");
-		eprintf ("=!mmap\n");
+		eprintf ("=!loop        # show loop iterations to dirtycow\n");
+		eprintf ("=!loop 10000  # change the amount of loops\n");
+		eprintf ("=!ptrace      # use ptrace backend (experimental)\n");
+		eprintf ("=!mmap        # use mmap backend (default)\n");
+		eprintf ("=!maps        # list memory maps of current process (see =!ptrace)\n");
+	} else if (!strcmp (command, "maps")) {
+		int i;
+		for (i = 0; i < self_sections_count; i++) {
+			io->cb_printf ("0x%08"PFMT64x" - 0x%08"PFMT64x" %s %s\n",
+				self_sections[i].from, self_sections[i].to,
+				r_str_rwx_i (self_sections[i].perm),
+				self_sections[i].name);
+		}
 	} else if (!strcmp (command, "ptrace")) {
 		mmo->force_ptrace = true;
 	} else if (!strcmp (command, "mmap")) {
 		mmo->force_ptrace = false;
 	} else if (!strncmp (command, "loop ", 5)) {
 		LOOPS = atoi (command + 5);
+	} else if (!strcmp (command, "loop")) {
+		io->cb_printf ("%d\n", LOOPS);
 	}
 }
 

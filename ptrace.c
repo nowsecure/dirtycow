@@ -17,11 +17,11 @@ static char child_stack[8192];
 static int debuggee(void *arg_) {
 #if 0
 	if (prctl (PR_SET_PDEATHSIG, SIGKILL, 0, 0, 0) == -1)
-		err(1, "prctl(PR_SET_PDEATHSIG)");
+		err (1, "prctl(PR_SET_PDEATHSIG)");
 #endif
 
 	if (ptrace (PTRACE_TRACEME, 0, NULL, NULL) == -1) {
-		err(1, "ptrace(PTRACE_TRACEME)");
+		err (1, "ptrace(PTRACE_TRACEME)");
 	}
 	kill (getpid (), SIGSTOP);
 
@@ -78,10 +78,6 @@ static void *ptraceThread(void *arg_) {
 
 	arg = (struct dcow_user_t *)arg_;
 
-	if (fork ()) {
-		return ret;
-	}
-
 	flags = CLONE_VM | CLONE_PTRACE;
 	pid = clone (debuggee, child_stack + sizeof (child_stack) - 8, flags, arg);
 	if (pid == -1) {
@@ -91,7 +87,6 @@ static void *ptraceThread(void *arg_) {
 
 	if (waitpid (pid, &status, __WALL) == -1) {
 		warn ("waitpid");
-		exit (0);
 		return NULL;
 	}
 
@@ -106,6 +101,5 @@ static void *ptraceThread(void *arg_) {
 		warn ("waitpid");
 	}
 
-	exit (0);
 	return ret;
 }
