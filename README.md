@@ -6,7 +6,7 @@ to allow the user to modify files owned by other users by
 messing up the Copy-On-Write cache.
 
 
-This plugin works on all linux kernels from 2007 (>= 2.6.22) til 2016.
+This plugin works on all linux kernels from 2007 (>= 2.6.22) until 2016 (< 4.8.3).
 
 Details
 -------
