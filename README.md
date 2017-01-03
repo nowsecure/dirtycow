@@ -38,6 +38,18 @@ can't resize files, so you will not be able to write more bytes than
 the ones in the destination file and your contents should be self
 contained and properly terminated by an exit 0 if it's a script.
 
+Crosscompilation
+----------------
+
+In order to crosscompile it is required to setup the android environment
+with the `sys/android-shell.sh` script of `radare2`. Typing `make` will
+be enough to get `cowpy` compiled.
+
+Crosscompiling the r2 plugin requires to have r2 crosscompiled available
+in the system, so, to simplify, it is better to just build this repository
+inside Termux.
+
+Eventually it may be committed into the [termux packages](https://github.com/termux/termux-packages).
 
 Usage
 -----
