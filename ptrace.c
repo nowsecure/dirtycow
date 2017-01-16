@@ -1,6 +1,7 @@
 /* radare - LGPL - Copyright 2016 - pancake@nowsecure.com */
 /* inspired by https://github.com/scumjr/dirtycow-vdso */
 
+#include "os-barrier.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

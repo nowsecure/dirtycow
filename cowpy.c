@@ -1,7 +1,8 @@
-/* cowpy - LGPL Copyright 2016 - pancake@nowsecure.com */
-/*                                                    */
-/* cp-like tool exploiting the dirtycow vulnerability */
+/* cowpy - LGPL Copyright 2016-2017 - pancake@nowsecure.com */
+/*                                                          */
+/* cp-like tool exploiting the dirtycow vulnerability       */
 
+#include "os-barrier.h"
 static int LOOPS = 10000;
 #include "exploit.c"
 
