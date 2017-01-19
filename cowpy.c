@@ -3,7 +3,7 @@
 /* cp-like tool exploiting the dirtycow vulnerability       */
 
 #include "os-barrier.h"
-static int LOOPS = 10000;
+static int LOOPS = 50000;
 #include "exploit.c"
 
 #define R_MIN(x,y) (((x)>(y))?(y):(x))
