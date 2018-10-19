@@ -69,9 +69,9 @@ static int update_self_regions(RIO *io, int pid) {
 		perm = 0;
 		for (i = 0; i < 4 && perms[i]; i++) {
 			switch (perms[i]) {
-			case 'r': perm |= R_IO_READ; break;
-			case 'w': perm |= R_IO_WRITE; break;
-			case 'x': perm |= R_IO_EXEC; break;
+			case 'r': perm |= R_PERM_R; break;
+			case 'w': perm |= R_PERM_W; break;
+			case 'x': perm |= R_PERM_E; break;
 			}
 		}
 		self_sections[self_sections_count].from = r_num_get (NULL, region);
@@ -192,7 +192,7 @@ static int __read(RIO *io, RIODesc *fd, ut8 *buf, int len) {
 	} else {
 		int left, perm;
 		if (self_in_section (io, io->off, &left, &perm)) {
-			if (perm & R_IO_READ) {
+			if (perm & R_PERM_R) {
 				int newlen = R_MIN (len, left);
 				ut8 *ptr = (ut8*)(size_t)io->off;
 				memcpy (buf, ptr, newlen);
