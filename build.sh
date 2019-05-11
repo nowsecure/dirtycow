@@ -3,7 +3,7 @@
 # script to build dirtycow on Termux
 #
 export T=/data/data/com.termux/files/usr
-if [ -d "$T" ]; then
+if [ ! -d "$T" ]; then
 	echo "This script must be run in a native Android inside the Termux shell"
 	exit 1
 fi
